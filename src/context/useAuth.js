@@ -55,10 +55,15 @@ import React, {
       await AsyncStorage.multiRemove(["@SenaiX:token", "@SenaiX:user"]);
       setData({});
     }, []);
+
+    const updateUser = useCallback((updateUser) => {
+      setData((currentData) => ({...currentData, user: updateUser}));
+      AsyncStorage.setItem("@SenaiX:user", JSON.stringify(updateUser));
+    }, []);
   
   
     return (
-      <AuthContext.Provider value={{ ...data, signIn, signOut }}>
+      <AuthContext.Provider value={{ ...data, signIn, signOut, updateUser }}>
         {children}
       </AuthContext.Provider>
     );
