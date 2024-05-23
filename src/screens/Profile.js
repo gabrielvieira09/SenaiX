@@ -1,7 +1,20 @@
 import React, { useEffect, useState } from "react";
-import {Text,View,StyleSheet,TouchableOpacity,ScrollView,Image,TextInput,Alert,} from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  TextInput,
+  Alert,
+} from "react-native";
 import { useAuth } from "../context/useAuth";
-import {Feather,MaterialCommunityIcons,MaterialIcons,} from "@expo/vector-icons";
+import {
+  Feather,
+  MaterialCommunityIcons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import MyButton from "../components/MyButton";
 import { api } from "../services/api";
 import UserPhoto from "../assets/user.png";
@@ -14,6 +27,31 @@ export default function Profile() {
   const [password, setPassword] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [editable, setEditable] = useState(false);
+  const { updateUser, signOut } = useAuth();
+
+  async function handleSubmit() {
+    setError("");
+    if(!email.trim() || !username.trim() || !password.trim()){
+      setError("Preencha todos os campos");
+      return;
+    }
+    try{
+      await api.patch("profile",{
+        email,
+        username,
+        password,
+      })
+      Alert.alert("Sucesso","Usuário atualizado com sucesso!");
+      setEditable(false)
+    } catch(error){
+      if(error.response){
+        setError(error.response.data.message);
+      }
+      else{
+        setError("Não foi possível se comunicar com o servidor");
+      }
+    }
+  }
 
   async function pickImage() {
     let permissionResult =
@@ -63,7 +101,6 @@ export default function Profile() {
     }
   }
 
-
   async function uploadPhoto(localUri) {
     let filename = localUri.split("/").pop();
     let match = /\.(\w+)$/.exec(filename);
@@ -80,7 +117,6 @@ export default function Profile() {
           "Content-Type": "multipart/form-data",
         },
       });
-
 
       if (response.data && response.data.user) {
         const updatedUser = response.data.user;
@@ -101,13 +137,14 @@ export default function Profile() {
   }
 
   useEffect(() => {
-    const fetchUserProfile = async() => {
+    const fetchUserProfile = async () => {
       try {
         const {data} = await api.get("/profile");
         setEmail(data.email);
         setUsername(data.username);
         setPhotoUrl(data.photoUrl);
-      }catch(error){
+      }
+      catch (error){
         console.log(error);
       }
     };
@@ -118,19 +155,23 @@ export default function Profile() {
     <ScrollView contentContainerStyle={style.container}>
       <View style={{ backgroundColor: "#1B1B1F", alignItems: "center" }}>
         <View style={style.header}>
-          <TouchableOpacity onPress={()=> setEditable(true)}>
+          <TouchableOpacity onPress={() => setEditable(true)}>
             <MaterialCommunityIcons name="pencil" size={28} color="#fff" />
           </TouchableOpacity>
           <Text style={{ fontSize: 28, fontWeight: "600", color: "#ffffff" }}>
             Perfil
           </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => signOut()}>
             <MaterialCommunityIcons name="logout" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
-        <View style={style.profileImageContainer}>
-          <Image key={photoUrl} style={style.profileImage}
-          source={ photoUrl ? {uri: `http://10.0.2.2:3333/${photoUrl}`} : UserPhoto }
+         <View style={style.profileImageContainer}>
+          <Image
+          key={photoUrl}
+          style={style.profileImage}
+          source={
+            photoUrl ? {uri:`http://10.0.2.2:3333/${photoUrl}`} : UserPhoto
+          }
           />
           <TouchableOpacity style={style.cameraButton} onPress={pickImage}>
             <MaterialIcons name="camera-alt" size={32} color="white" />
@@ -187,8 +228,8 @@ export default function Profile() {
               <Feather name="lock" size={24} color="#8a8787" />
               <TextInput
                 style={style.input}
-                editable={editable}
                 value={password}
+                editable={editable}
                 onChangeText={(text) => {
                   setPassword(text);
                 }}
@@ -201,10 +242,9 @@ export default function Profile() {
             <Text style={style.error}>{error}</Text>
           </View>
         </View>
-        {editable && (
-        <View style={{ gap: 8, marginTop: 16, flexDirection: "row" }}>
-          <MyButton style={{ flex: 1 }} onPress={() => setEditable(false)} text="Cancelar" />
-          <MyButton style={{ flex: 1 }} text="Salvar alterações" />
+        {editable && (  <View style={{ gap: 8, marginTop: 16, flexDirection: "row" }}>
+          <MyButton onPress={() => editable(false)} style={{ flex: 1 }} text="Cancelar" />
+          <MyButton style={{ flex: 1 }} text="Salvar alterações" onPress={() => handleSubmit()} />
         </View>
         )}
       </View>
